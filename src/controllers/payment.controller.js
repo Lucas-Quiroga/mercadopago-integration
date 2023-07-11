@@ -1,9 +1,9 @@
 import mercadopago from "mercadopago";
+import { MERCADOPAGO_API_KEY } from "../config.js";
 
 export const createOrder = async (req, res) => {
   mercadopago.configure({
-    sandbox: true,
-    access_token: "",
+    access_token: MERCADOPAGO_API_KEY,
   });
 
   const result = await mercadopago.preferences.create({
@@ -21,16 +21,26 @@ export const createOrder = async (req, res) => {
       pending: "http://localhost:4000/pending",
     },
     notification_url:
-      "https://ddce-2802-8010-8b48-f700-3729-f4a-2edf-6234.sa.ngrok.io/webhook",
+      "https://3c72-2802-8010-8b3c-9000-f941-88aa-1c0c-9e61.ngrok.io/webhook",
   });
 
-  console.log(result.body);
+  console.log(JSON.stringify(result.body, null, 2));
 
   res.send(result.body);
 };
 
-export const receiveWebHook = (req, res) => {
-  console.log(req.query);
+export const receiveWebHook = async (req, res) => {
+  const payment = req.query;
 
-  res.send("webhook");
+  try {
+    if (payment.type === "payment") {
+      const data = await mercadopago.payment.findById(payment["data.id"]);
+      console.log(data);
+      //store in database
+    }
+    res.sendStatus(204);
+  } catch (error) {
+    console.log(error);
+    return res.sendStatus(500).json({ error: error.message });
+  }
 };
